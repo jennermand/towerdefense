@@ -1,0 +1,14 @@
+@page "/test"
+
+<h1>Test Page</h1>
+<p>Current time: @DateTime.Now</p>
+<button @onclick="IncrementCount">Click me (@currentCount)</button>
+
+@code {
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+}

@@ -1,0 +1,417 @@
+@page "/"
+@using VectorTD.Game
+@using VectorTD.Core
+@implements IDisposable
+@inject IJSRuntime JSRuntime
+
+<div class="game-container" style="display: flex; height: 100vh; width: 100vw; overflow: hidden; background-color: #000;">
+    <div class="game-canvas" style="flex: 1; display: flex; justify-content: center; align-items: center; padding: 0;">
+        <div id="gameArea" @ref="gameAreaRef" style="position: relative; width: 800px; height: 600px; border: 1px solid #333; background-color: #111; overflow: hidden; transform-origin: center center; max-width: 100%; max-height: 100%;">
+            <!-- Grid background -->
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1;">
+                @for (int x = 0; x < 20; x++)
+                {
+                    <div style="position: absolute; left: @(x * 40)px; top: 0; width: 1px; height: 100%; background-color: #333;"></div>
+                }
+                @for (int y = 0; y < 15; y++)
+                {
+                    <div style="position: absolute; left: 0; top: @(y * 40)px; width: 100%; height: 1px; background-color: #333;"></div>
+                }
+            </div>
+
+            <!-- Path visualization - Much more visible -->
+            <!-- Segment 1: (50,50) to (200,50) - Horizontal -->
+            <div style="position: absolute; top: 48px; left: 50px; width: 150px; height: 8px; background-color: #666; border: 1px solid #888;"></div>
+            <!-- Segment 2: (200,50) to (200,150) - Vertical -->
+            <div style="position: absolute; top: 50px; left: 198px; width: 8px; height: 100px; background-color: #666; border: 1px solid #888;"></div>
+            <!-- Segment 3: (200,150) to (350,150) - Horizontal -->
+            <div style="position: absolute; top: 148px; left: 200px; width: 150px; height: 8px; background-color: #666; border: 1px solid #888;"></div>
+            <!-- Segment 4: (350,150) to (350,250) - Vertical -->
+            <div style="position: absolute; top: 150px; left: 348px; width: 8px; height: 100px; background-color: #666; border: 1px solid #888;"></div>
+            <!-- Segment 5: (350,250) to (500,250) - Horizontal -->
+            <div style="position: absolute; top: 248px; left: 350px; width: 150px; height: 8px; background-color: #666; border: 1px solid #888;"></div>
+            <!-- Segment 6: (500,250) to (500,350) - Vertical -->
+            <div style="position: absolute; top: 250px; left: 498px; width: 8px; height: 100px; background-color: #666; border: 1px solid #888;"></div>
+            <!-- Segment 7: (500,350) to (650,350) - Horizontal -->
+            <div style="position: absolute; top: 348px; left: 500px; width: 150px; height: 8px; background-color: #666; border: 1px solid #888;"></div>
+            <!-- Segment 8: (650,350) to (650,450) - Vertical -->
+            <div style="position: absolute; top: 350px; left: 648px; width: 8px; height: 100px; background-color: #666; border: 1px solid #888;"></div>
+            <!-- Segment 9: (650,450) to (750,450) - Horizontal -->
+            <div style="position: absolute; top: 448px; left: 650px; width: 100px; height: 8px; background-color: #666; border: 1px solid #888;"></div>
+
+            <!-- Path waypoints for debugging -->
+            <div style="position: absolute; top: 45px; left: 45px; width: 10px; height: 10px; background-color: #0f0; border-radius: 50%; border: 2px solid #fff;"></div> <!-- Start -->
+            <div style="position: absolute; top: 45px; left: 195px; width: 10px; height: 10px; background-color: #ff0; border-radius: 50%; border: 2px solid #fff;"></div>
+            <div style="position: absolute; top: 145px; left: 195px; width: 10px; height: 10px; background-color: #ff0; border-radius: 50%; border: 2px solid #fff;"></div>
+            <div style="position: absolute; top: 145px; left: 345px; width: 10px; height: 10px; background-color: #ff0; border-radius: 50%; border: 2px solid #fff;"></div>
+            <div style="position: absolute; top: 245px; left: 345px; width: 10px; height: 10px; background-color: #ff0; border-radius: 50%; border: 2px solid #fff;"></div>
+            <div style="position: absolute; top: 245px; left: 495px; width: 10px; height: 10px; background-color: #ff0; border-radius: 50%; border: 2px solid #fff;"></div>
+            <div style="position: absolute; top: 345px; left: 495px; width: 10px; height: 10px; background-color: #ff0; border-radius: 50%; border: 2px solid #fff;"></div>
+            <div style="position: absolute; top: 345px; left: 645px; width: 10px; height: 10px; background-color: #ff0; border-radius: 50%; border: 2px solid #fff;"></div>
+            <div style="position: absolute; top: 445px; left: 645px; width: 10px; height: 10px; background-color: #ff0; border-radius: 50%; border: 2px solid #fff;"></div>
+            <div style="position: absolute; top: 445px; left: 745px; width: 10px; height: 10px; background-color: #f00; border-radius: 50%; border: 2px solid #fff;"></div> <!-- End -->
+
+            <!-- Death Markers -->
+            @{
+                var deathMarkers = _gameState?.GetDeathMarkers() ?? new List<DeathMarker>();
+            }
+            <div style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: white; padding: 5px; font-size: 12px; z-index: 1000;">
+                DEBUG: @deathMarkers.Count death markers
+            </div>
+
+            @foreach (var marker in deathMarkers)
+            {
+                var opacity = marker.Alpha;
+                <div style="position: absolute; left: @(marker.Position.X - 10)px; top: @(marker.Position.Y - 10)px; width: 20px; height: 20px; border: 3px solid #ff0; border-radius: 50%; pointer-events: none; z-index: 200; opacity: @opacity; background-color: rgba(255,255,0,0.3);"></div>
+            }
+
+
+
+
+
+            <!-- Enemies -->
+            @foreach (var enemy in _gameState?.GetEnemies() ?? new List<SimpleEnemy>())
+            {
+
+                var baseColor = enemy.Color switch
+                {
+                    EnemyColor.Red => "#f44",
+                    EnemyColor.Green => "#4f4",
+                    EnemyColor.Blue => "#44f",
+                    _ => "#f44"
+                };
+                var enemyColor = enemy.IsFlashing ? "#fff" : baseColor;
+                var borderColor = enemy.IsFlashing ? "#ff0" : (enemy.Color switch
+                {
+                    EnemyColor.Red => "#f88",
+                    EnemyColor.Green => "#8f8",
+                    EnemyColor.Blue => "#88f",
+                    _ => "#f88"
+                });
+
+                var shapeStyle = enemy.Shape switch
+                {
+                    EnemyShape.Circle => "border-radius: 50%;",
+                    EnemyShape.Triangle => "clip-path: polygon(50% 0%, 0% 100%, 100% 100%);",
+                    EnemyShape.Square => "border-radius: 2px;",
+                    _ => "border-radius: 50%;"
+                };
+
+                <div @key="enemy.Id" style="position: absolute; left: @(enemy.Position.X - 8)px; top: @(enemy.Position.Y - 8)px; width: 16px; height: 16px; background-color: @enemyColor; @shapeStyle border: 2px solid @borderColor; transition: all 0.1s;">
+                    @if (enemy.Health < enemy.MaxHealth)
+                    {
+                        <div style="position: absolute; top: -10px; left: -4px; width: 24px; height: 4px; background-color: #333; border-radius: 2px; border: 1px solid #555;">
+                            <div style="width: @(24 * enemy.Health / enemy.MaxHealth)px; height: 100%; background-color: @(enemy.Health > 50 ? "#4f4" : enemy.Health > 25 ? "#ff4" : "#f44"); border-radius: 2px;"></div>
+                        </div>
+                    }
+                    <!-- Debug info -->
+                    <div style="position: absolute; top: 22px; left: -15px; font-size: 8px; color: #fff; background-color: rgba(0,0,0,0.7); padding: 1px 2px; border-radius: 2px; white-space: nowrap;">
+                        @($"{enemy.Color.ToString()[0]}{enemy.Shape.ToString()[0]}")
+                    </div>
+                </div>
+            }
+
+            <!-- Laser beams (render first so they appear behind towers) -->
+            @foreach (var tower in _gameState?.GetTowers() ?? new List<SimpleTower>())
+            {
+                @if (tower.IsLaserVisible && tower.LaserTarget.HasValue)
+                {
+                    var target = tower.LaserTarget.Value;
+
+                    <!-- Simple line-based laser using SVG for better reliability -->
+                    <svg style="position: absolute; left: 0; top: 0; width: 800px; height: 600px; pointer-events: none; z-index: 10;">
+                        <line x1="@tower.Position.X" y1="@tower.Position.Y"
+                              x2="@target.X" y2="@target.Y"
+                              stroke="#ff0" stroke-width="3" opacity="0.9">
+                            <animate attributeName="opacity" values="0.9;0.5;0.9" dur="0.1s" repeatCount="1"/>
+                        </line>
+                        <line x1="@tower.Position.X" y1="@tower.Position.Y"
+                              x2="@target.X" y2="@target.Y"
+                              stroke="#f00" stroke-width="1" opacity="1.0"/>
+                    </svg>
+                }
+            }
+
+            <!-- Towers -->
+            @foreach (var tower in _gameState?.GetTowers() ?? new List<SimpleTower>())
+            {
+                var towerColor = tower.Color switch
+                {
+                    TowerColor.Red => "#f44",
+                    TowerColor.Green => "#4f4",
+                    TowerColor.Blue => "#44f",
+                    _ => "#44f"
+                };
+                var towerBorder = tower.Color switch
+                {
+                    TowerColor.Red => "#f88",
+                    TowerColor.Green => "#8f8",
+                    TowerColor.Blue => "#88f",
+                    _ => "#88f"
+                };
+
+                <div style="position: absolute; left: @(tower.Position.X - 12)px; top: @(tower.Position.Y - 12)px; width: 24px; height: 24px; background-color: @towerColor; border-radius: 50%; border: 2px solid @towerBorder; cursor: pointer; z-index: 100;"
+                     @onclick="() => SelectTower(tower)"
+                     @onclick:stopPropagation="true">
+                    @if (_selectedTower == tower)
+                    {
+                        <!-- Range indicator -->
+                        <div style="position: absolute; left: @(-tower.Range + 12)px; top: @(-tower.Range + 12)px; width: @(tower.Range * 2)px; height: @(tower.Range * 2)px; border: 1px solid @towerBorder; border-radius: 50%; opacity: 0.3;"></div>
+                    }
+                </div>
+            }
+
+            <!-- Grid click areas for tower placement (only when placing towers) -->
+            @if (_placingTowerColor.HasValue)
+            {
+                @for (int x = 0; x < 20; x++)
+                {
+                    @for (int y = 0; y < 15; y++)
+                    {
+                        int gridX = x, gridY = y;
+                        var existingTower = _gameState?.GetTowerAt(gridX, gridY);
+                        var gridColor = existingTower != null ? "rgba(255,0,0,0.3)" : "rgba(0,255,0,0.1)";
+
+                        <div style="position: absolute; left: @(x * 40)px; top: @(y * 40)px; width: 40px; height: 40px; cursor: @(existingTower != null ? "not-allowed" : "pointer"); background-color: @gridColor; border: 1px solid rgba(255,255,255,0.2); z-index: 50;"
+                             @onclick="() => TryPlaceTower(gridX, gridY)"></div>
+                    }
+                }
+            }
+        </div>
+        <!-- Overlay UI Panel -->
+        <div class="ui-panel-overlay" style="position: fixed; top: 10px; right: 10px; width: 280px; max-height: calc(100vh - 20px); background-color: rgba(34, 34, 34, 0.95); padding: 10px; border: 1px solid #444; border-radius: 8px; z-index: 1000; backdrop-filter: blur(5px); overflow-y: auto; font-size: 12px;">
+        <h3>Vector TD</h3>
+        <div style="color: @(_gameState?.IsGameOver == true ? "#f44" : !(_gameState?.HasGameStarted ?? false) ? "#ff0" : _gameState?.IsWaveBreak == true ? "#ff0" : "#4f4"); font-size: 12px; margin-bottom: 10px;">
+            Status: @(_gameState?.IsGameOver == true ? "GAME OVER" : !(_gameState?.HasGameStarted ?? false) ? "🏗️ Build a tower to start!" : _gameState?.IsWaveBreak == true ? $"Next wave in {_gameState.WaveBreakTimeRemaining:F1}s" : "Fighting")
+        </div>
+
+        <h4 style="margin: 0 0 8px 0; font-size: 14px;">Towers</h4>
+        <div class="tower-button" @onclick="() => SetPlacingTower(TowerColor.Red)"
+             style="background-color: @(_placingTowerColor == TowerColor.Red ? "#555" : "#333"); border-left: 4px solid #f44; margin: 3px 0; padding: 6px; font-size: 11px;">
+            Red Tower
+            <div style="font-size: 10px;">Cost: 10 | Best vs Red</div>
+        </div>
+        <div class="tower-button" @onclick="() => SetPlacingTower(TowerColor.Green)"
+             style="background-color: @(_placingTowerColor == TowerColor.Green ? "#555" : "#333"); border-left: 4px solid #4f4; margin: 3px 0; padding: 6px; font-size: 11px;">
+            Green Tower
+            <div style="font-size: 10px;">Cost: 15 | Best vs Green</div>
+        </div>
+        <div class="tower-button" @onclick="() => SetPlacingTower(TowerColor.Blue)"
+             style="background-color: @(_placingTowerColor == TowerColor.Blue ? "#555" : "#333"); border-left: 4px solid #44f; margin: 3px 0; padding: 6px; font-size: 11px;">
+            Blue Tower
+            <div style="font-size: 10px;">Cost: 25 | Best vs Blue</div>
+        </div>
+
+        <div class="game-stats" style="margin-top: 10px; padding-top: 8px; border-top: 1px solid #555;">
+            <div class="stat-item" style="margin: 2px 0; font-size: 11px;">Lives: @(_gameState?.Lives ?? 0)</div>
+            <div class="stat-item" style="margin: 2px 0; font-size: 11px;">Money: @(_gameState?.Money ?? 0)</div>
+            <div class="stat-item" style="margin: 2px 0; font-size: 11px;">Wave: @(_gameState?.CurrentWave ?? 0) (@(_gameState?.GetEnemiesPerWave() ?? 0) enemies)</div>
+            <div class="stat-item" style="margin: 2px 0; font-size: 11px; color: #f84;">Strength: @(Math.Pow(1.02, (_gameState?.CurrentWave ?? 1) - 1).ToString("F1"))x</div>
+            <div class="stat-item" style="margin: 2px 0; font-size: 11px;">Enemies: @(_gameState?.GetEnemies().Count ?? 0)</div>
+            <div class="stat-item" style="margin: 2px 0; font-size: 11px;">Towers: @(_gameState?.TowersBuilt ?? 0)</div>
+            <div class="stat-item" style="margin: 2px 0; font-size: 11px;">Killed: @(_gameState?.EnemiesKilled ?? 0)</div>
+            <div class="stat-item" style="color: #0f0; margin: 2px 0; font-size: 11px;">Updates: @_updateCount</div>
+
+            <!-- Debug info -->
+            <div style="margin-top: 10px; padding: 5px; background-color: #222; border: 1px solid #444; border-radius: 3px;">
+                <div style="font-size: 10px; color: #888;">DEBUG INFO:</div>
+                <div style="font-size: 10px; color: #aaa;">Update Count: @_updateCount</div>
+                @if (_gameState?.GetEnemies().FirstOrDefault() is SimpleEnemy firstEnemy)
+                {
+                    <div style="font-size: 10px; color: #ccc;">
+                        Pos: (@(firstEnemy.Position.X.ToString("F0")), @(firstEnemy.Position.Y.ToString("F0")))<br/>
+                        Waypoint: @(firstEnemy.CurrentWaypoint)/9<br/>
+                        Health: @(firstEnemy.Health.ToString("F0"))/@(firstEnemy.MaxHealth.ToString("F0"))<br/>
+                        Lasers: @(_gameState.GetTowers().Count(t => t.IsLaserVisible))
+                    </div>
+                }
+                else
+                {
+                    <div style="font-size: 10px; color: #666;">No enemies active (Count: @(_gameState?.GetEnemies().Count ?? 0))</div>
+                }
+            </div>
+
+            @if (_gameState?.IsGameOver == true)
+            {
+                <button @onclick="RestartGame" style="margin-top: 10px; padding: 8px; background-color: #f44; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Restart Game
+                </button>
+            }
+        </div>
+
+        @if (_selectedTower != null)
+        {
+            <div style="margin-top: 10px; padding: 8px; background-color: rgba(34, 34, 34, 0.95); border: 1px solid #555; border-radius: 4px; backdrop-filter: blur(3px);">
+                <h4 style="margin: 0 0 6px 0; font-size: 12px; color: @GetTowerColorHex(_selectedTower.Color);">@_selectedTower.Color Tower Upgrades</h4>
+                <div style="font-size: 9px; margin-bottom: 8px; line-height: 1.2; white-space: pre-line;">@_selectedTower.GetStats()</div>
+
+                <button @onclick="() => UpgradeRange()"
+                        disabled="@(_gameState?.Money < _selectedTower.RangeUpgradeCost)"
+                        style="display: block; width: 100%; margin: 2px 0; padding: 3px; font-size: 10px; background-color: @(_gameState?.Money >= _selectedTower.RangeUpgradeCost ? "#4a4" : "#444"); color: white; border: 1px solid #666; border-radius: 2px; cursor: @(_gameState?.Money >= _selectedTower.RangeUpgradeCost ? "pointer" : "not-allowed");">
+                    📡 Range +10% (Cost: @_selectedTower.RangeUpgradeCost)
+                </button>
+                <button @onclick="() => UpgradeFireRate()"
+                        disabled="@(_gameState?.Money < _selectedTower.FireRateUpgradeCost)"
+                        style="display: block; width: 100%; margin: 2px 0; padding: 3px; font-size: 10px; background-color: @(_gameState?.Money >= _selectedTower.FireRateUpgradeCost ? "#44a" : "#444"); color: white; border: 1px solid #666; border-radius: 2px; cursor: @(_gameState?.Money >= _selectedTower.FireRateUpgradeCost ? "pointer" : "not-allowed");">
+                    ⚡ Fire Rate +10% (Cost: @_selectedTower.FireRateUpgradeCost)
+                </button>
+                <button @onclick="() => UpgradeDamage()"
+                        disabled="@(_gameState?.Money < _selectedTower.DamageUpgradeCost)"
+                        style="display: block; width: 100%; margin: 2px 0; padding: 3px; font-size: 10px; background-color: @(_gameState?.Money >= _selectedTower.DamageUpgradeCost ? "#a44" : "#444"); color: white; border: 1px solid #666; border-radius: 2px; cursor: @(_gameState?.Money >= _selectedTower.DamageUpgradeCost ? "pointer" : "not-allowed");">
+                    💥 Damage +5% (Cost: @_selectedTower.DamageUpgradeCost)
+                </button>
+
+                <div style="margin: 6px 0 4px 0; padding-top: 4px; border-top: 1px solid #555; font-size: 10px; color: #ccc;">Targeting Mode:</div>
+                <div style="display: flex; gap: 2px;">
+                    <button @onclick="() => SetTargetingMode(TargetingMode.Closest)"
+                            style="flex: 1; padding: 3px; font-size: 9px; background-color: @(_selectedTower.TargetingMode == TargetingMode.Closest ? "#4a4" : "#444"); color: white; border: 1px solid #666; border-radius: 2px; cursor: pointer;">
+                        🎯 Closest
+                    </button>
+                    <button @onclick="() => SetTargetingMode(TargetingMode.Strongest)"
+                            style="flex: 1; padding: 3px; font-size: 9px; background-color: @(_selectedTower.TargetingMode == TargetingMode.Strongest ? "#4a4" : "#444"); color: white; border: 1px solid #666; border-radius: 2px; cursor: pointer;">
+                        💪 Strongest
+                    </button>
+                </div>
+
+                <button @onclick="() => _selectedTower = null"
+                        style="display: block; width: 100%; margin: 4px 0 0 0; padding: 3px; font-size: 10px; background-color: #666; color: white; border: 1px solid #888; border-radius: 2px; cursor: pointer;">
+                    ❌ Close
+                </button>
+            </div>
+        }
+        </div>
+    </div>
+</div>
+
+@code {
+    private SimpleGameState? _gameState;
+    private SimpleTower? _selectedTower;
+    private TowerColor? _placingTowerColor = null;
+    private System.Threading.Timer? _gameTimer;
+    private int _updateCount = 0;
+    private ElementReference gameAreaRef;
+    private float _currentScale = 1.0f;
+
+    protected override void OnInitialized()
+    {
+        _gameState = new SimpleGameState();
+        _gameState.OnGameStateChanged += StateHasChanged;
+
+        // Start game loop timer (10 FPS for debugging)
+        _gameTimer = new System.Threading.Timer(UpdateGame, null, 0, 100);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await SetupResponsiveScaling();
+        }
+    }
+
+    private async Task SetupResponsiveScaling()
+    {
+        try
+        {
+            // Add a small delay to ensure the DOM is fully rendered
+            await Task.Delay(200);
+            await JSRuntime.InvokeVoidAsync("setupGameScaling", gameAreaRef);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error setting up responsive scaling: {ex.Message}");
+        }
+    }
+
+    private void UpdateGame(object? state)
+    {
+        if (_gameState != null)
+        {
+            _updateCount++;
+            _gameState.Update(0.1f); // 10 FPS for debugging
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void TryPlaceTower(int gridX, int gridY)
+    {
+        if (_placingTowerColor.HasValue && _gameState != null)
+        {
+            if (_gameState.TryBuildTower(gridX, gridY, _placingTowerColor.Value))
+            {
+                _placingTowerColor = null;
+            }
+        }
+    }
+
+    private void SetPlacingTower(TowerColor color)
+    {
+        _placingTowerColor = _placingTowerColor == color ? null : color;
+    }
+
+    private string GetTowerColorHex(TowerColor color)
+    {
+        return color switch
+        {
+            TowerColor.Red => "#f44",
+            TowerColor.Green => "#4f4",
+            TowerColor.Blue => "#44f",
+            _ => "#fff"
+        };
+    }
+
+    private void UpgradeRange()
+    {
+        if (_selectedTower != null && _gameState != null)
+        {
+            _gameState.TryUpgradeTower(_selectedTower, "range");
+        }
+    }
+
+    private void UpgradeFireRate()
+    {
+        if (_selectedTower != null && _gameState != null)
+        {
+            _gameState.TryUpgradeTower(_selectedTower, "firerate");
+        }
+    }
+
+    private void UpgradeDamage()
+    {
+        if (_selectedTower != null && _gameState != null)
+        {
+            _gameState.TryUpgradeTower(_selectedTower, "damage");
+        }
+    }
+
+    private void SetTargetingMode(TargetingMode mode)
+    {
+        if (_selectedTower != null)
+        {
+            _selectedTower.SetTargetingMode(mode);
+        }
+    }
+
+    private void SelectTower(SimpleTower tower)
+    {
+        _selectedTower = _selectedTower == tower ? null : tower;
+    }
+
+
+
+    private void RestartGame()
+    {
+        _gameState?.RestartGame();
+        _selectedTower = null;
+        _placingTowerColor = null;
+    }
+
+    public void Dispose()
+    {
+        _gameTimer?.Dispose();
+        if (_gameState != null)
+        {
+            _gameState.OnGameStateChanged -= StateHasChanged;
+        }
+    }
+}

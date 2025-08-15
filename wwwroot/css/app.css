@@ -1,0 +1,199 @@
+html, body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: #000;
+    color: #fff;
+    overflow: hidden;
+}
+
+#app {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.loading-progress {
+    position: relative;
+    display: block;
+    width: 8rem;
+    height: 8rem;
+    margin: 20vh auto 1rem auto;
+}
+
+.loading-progress circle {
+    fill: none;
+    stroke: #e0e0e0;
+    stroke-width: 0.6rem;
+    transform-origin: 50% 50%;
+    transform: rotate(-90deg);
+}
+
+.loading-progress circle:last-child {
+    stroke: #1b6ec2;
+    stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
+    transition: stroke-dasharray 0.05s ease-in-out;
+}
+
+.loading-progress-text {
+    position: absolute;
+    text-align: center;
+    font-weight: bold;
+    inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
+}
+
+.loading-progress-text:after {
+    content: var(--blazor-load-percentage-text, "Loading");
+}
+
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+    color: black;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
+
+.game-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    background-color: #000;
+    overflow: hidden;
+}
+
+.game-canvas {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    background-color: #000;
+    min-width: 0; /* Allow flex item to shrink */
+}
+
+.ui-panel {
+    width: 300px;
+    min-width: 300px;
+    background-color: #111;
+    border-left: 2px solid #333;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0; /* Prevent UI panel from shrinking */
+    overflow-y: auto;
+}
+
+.tower-button {
+    margin: 5px 0;
+    padding: 10px;
+    background-color: #333;
+    border: 1px solid #555;
+    color: #fff;
+    cursor: pointer;
+    text-align: center;
+    user-select: none;
+}
+
+.tower-button:hover {
+    background-color: #444;
+}
+
+.tower-button.dragging {
+    opacity: 0.5;
+}
+
+.game-stats {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid #333;
+}
+
+.stat-item {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.upgrade-panel {
+    position: absolute;
+    background-color: #222;
+    border: 2px solid #555;
+    padding: 15px;
+    border-radius: 5px;
+    z-index: 1000;
+}
+
+.upgrade-button {
+    display: block;
+    margin: 5px 0;
+    padding: 8px;
+    background-color: #444;
+    border: 1px solid #666;
+    color: #fff;
+    cursor: pointer;
+    text-align: center;
+}
+
+.upgrade-button:hover {
+    background-color: #555;
+}
+
+/* Responsive design for different screen sizes */
+@media (max-width: 1200px) {
+    .ui-panel {
+        width: 250px;
+        min-width: 250px;
+    }
+}
+
+@media (max-width: 900px) {
+    .game-container {
+        flex-direction: column;
+    }
+
+    .ui-panel {
+        width: 100%;
+        min-width: 100%;
+        height: 200px;
+        border-left: none;
+        border-top: 2px solid #333;
+        flex-shrink: 0;
+    }
+
+    .game-canvas {
+        flex: 1;
+        min-height: 0;
+    }
+}
+
+@media (max-width: 600px) {
+    .ui-panel {
+        height: 180px;
+        padding: 8px;
+    }
+
+    .tower-button {
+        padding: 8px;
+        margin: 3px 0;
+        font-size: 12px;
+    }
+
+    .stat-item {
+        font-size: 12px;
+        margin: 3px 0;
+    }
+}
