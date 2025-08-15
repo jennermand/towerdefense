@@ -1,0 +1,31 @@
+name: WASM Front
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    # Manual trigger
+
+jobs:
+  build-and-push:
+    name: Build Docker Image
+    uses: jennermand/git-workflows/.github/workflows/build-docker.yaml@main
+    with:
+      image-name: towerdefense
+      project: "towerdefense"      
+      dockerfile-path: Dockerfile-Wasm
+    secrets: inherit
+
+  update-image-refs:
+    needs: build-and-push
+    name: Update Image References.
+    uses: jennermand/git-workflows/.github/workflows/update-image-ref.yaml@main
+    secrets: inherit
+    with:
+      project: "towerdefense"
+      container: towerdefense
+      section: 'towerdefense'
+      sub-section: ""
+      version: ${{ needs.build-and-push.outputs.version }}

@@ -1,0 +1,13 @@
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+COPY . .
+RUN ls
+RUN pwd
+
+RUN dotnet publish -c Release -o /app/publish ./VectorTD.csproj
+
+# Runtime stage (nginx serving static files)
+FROM nginx:alpine AS final
+COPY --from=build /app/publish/wwwroot /usr/share/nginx/html
+COPY --from=build /src/blazor.conf /etc/nginx/conf.d/blazor.conf
